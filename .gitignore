@@ -1,0 +1,6 @@
+npm-debug.log
+node_modules
+coverage
+distribution
+doc
+.nyc_output
