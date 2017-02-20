@@ -21,7 +21,7 @@
 		"lint": "xo --fix",
 		"test": "cross-env NODE_ENV=test nyc mocha --compilers js:babel-register",
 		"coverage": "nyc check-coverage",
-		"clean": "rimraf build coverage .nyc_output",
+		"clean": "rimraf build coverage .nyc_output distribution doc",
 		"build:doc": "esdoc",
 		"build:transpile": "babel source --source-maps --out-dir=distribution --minified",
 		"build": "ncu && npm run build:transpile && npm run build:doc",
@@ -36,13 +36,15 @@
 	"dependencies": {
 		"babel-polyfill": "^6.23.0",
 		"express": "^4.14.1",
-		"xmldom": "^0.1.27"
+		"xmldom": "^0.1.27",
+		"little-quacker": "^1.0.0",
+		"oai-pmh-server-backend-module-prototype": "https://github.com/natlibfi/oai-pmh-server-backend-module-prototype"
 	},
 	"devDependencies": {
 		"git-scripts": "^0.2.1",
 		"validate-commit": "^2.3.2",
-		"npm-check-updates": "^2.10.2",
-		"rimraf": "^2.5.4",
+		"npm-check-updates": "^2.10.3",
+		"rimraf": "^2.6.0",
 		"mocha": "^3.2.0",
 		"xo": "^0.17.1",    
 		"istanbul": "^0.4.5",
@@ -56,6 +58,7 @@
 		"babel-register": "^6.22.0",
 		"babel-polyfill": "^6.22.0",
 		"babel-plugin-istanbul": "^4.0.0",
+		"simple-mock": "^0.7.3",
 		"codeclimate-test-reporter": "^0.4.0"
 	},
 	"xo": {

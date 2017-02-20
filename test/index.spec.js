@@ -1,6 +1,6 @@
 /**
 *
-* @licstart  The following is the entire license notice for the JavaScript code in this file. 
+* @licstart  The following is the entire license notice for the JavaScript code in this file.
 *
 * Modular OAI-PMH server
 *
@@ -30,7 +30,36 @@
 
 'use strict';
 
+/**
+* Disabled until needed
+* import {get as httpGet} from 'http';
+*/
 import {expect} from 'chai';
-import * as testContext from '../source/index';
+import simple from 'simple-mock';
+import oaiPmhServer from '../source/index';
 
-describe.skip('index');
+describe('index', () => {
+	it.skip('Should throw because backend module factory is not a function');
+	it.skip('Should throw because mandatory parameters are missing');
+	it.skip('Should throw because parameters are invalid');
+	it.skip('Should throw because creating the backend module failed');
+	/* An instance of the object produced oai-pmh-server-backend-module-prototype */
+
+	it('Should throw because backend module is not a valid instance', () => {
+		expect(() => {
+			return oaiPmhServer(simple.stub().returnWith({foo: 'bar'}), {
+				repositoryName: 'foo',
+				baseURL: 'http://localhost',
+				adminEmail: 'foo@bar'
+			});
+		}).to.throw(Error, /^Backend module is not an instance of the backend module prototype$/);
+	});
+
+	describe('app', () => {
+		describe.skip('#Identify');
+		describe.skip('#ListSets');
+		describe.skip('#ListMetadataFormats');
+		describe.skip('#ListIdentifiers');
+		describe.skip('#ListRecords');
+	});
+});
