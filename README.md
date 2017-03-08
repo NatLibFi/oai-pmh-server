@@ -1,4 +1,4 @@
-# Modular OAI-PMH server [![NPM Version](https://img.shields.io/npm/v/oai-pmh-server.svg)](https://npmjs.org/package/oai-pmh-server) [![Build Status](https://travis-ci.org/natlibfi/oai-pmh-server.svg)](https://travis-ci.org/natlibfi/oai-pmh-server) [![Test Coverage](https://codeclimate.com/github/NatLibFi/oai-pmh-server/badges/coverage.svg)](https://codeclimate.com/github/NatLibFi/oai-pmh-server/coverage)
+# Modular OAI-PMH server [![NPM Version](https://img.shields.io/npm/v/oai-pmh-server.svg)](https://npmjs.org/package/oai-pmh-server) [![Build Status](https://travis-ci.org/NatLibFi/oai-pmh-server.svg)](https://travis-ci.org/NatLibFi/oai-pmh-server) [![Test Coverage](https://codeclimate.com/github/NatLibFi/oai-pmh-server/badges/coverage.svg)](https://codeclimate.com/github/NatLibFi/oai-pmh-server/coverage)
 
 Modular OAI-PMH server
 
