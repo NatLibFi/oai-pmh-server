@@ -39,8 +39,18 @@ import simple from 'simple-mock';
 import oaiPmhServer from '../source/index';
 
 describe('index', () => {
-	it.skip('Should throw because backend module factory is not a function');
-	it.skip('Should throw because mandatory parameters are missing');
+	it('Should throw because backend module factory is not a function', () => {
+		expect(() => {
+			return oaiPmhServer({});
+		}).to.throw(Error, /^backendModuleFactory is not a function$/);
+	});
+
+	it('Should throw because mandatory parameters are missing', () => {
+		expect(() => {
+			return oaiPmhServer(simple.stub());
+		}).to.throw(Error, /^Mandatory parameters missing: /);
+	});
+
 	it.skip('Should throw because parameters are invalid');
 	it.skip('Should throw because creating the backend module failed');
 	/* An instance of the object produced oai-pmh-server-backend-module-prototype */

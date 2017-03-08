@@ -108,11 +108,9 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 
 	if (typeof backendModuleFactory !== 'function') {
 		throw new Error('backendModuleFactory is not a function');
-	} else if (typeof parameters !== 'object') {
-		throw new Error('Parameters is not an object');
 	}
 
-	initParameters(parameters);
+	initParameters(typeof parameters === 'object' ? parameters : {});
 
 	try {
 		backendModule = backendModuleFactory(parameters.backendModule);
