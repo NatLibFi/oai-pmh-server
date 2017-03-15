@@ -32,6 +32,7 @@
 
 import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
+import express from 'express';
 import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
 
 const PROTOCOL_VERSION = '2.0';
@@ -103,8 +104,8 @@ function initParameters(parameters) {
 * @returns {void}
 */
 export default function oaiPmhServer(backendModuleFactory, parameters) {
-	var backendModule;
-	var backendModulePrototype = backendModulePrototypeFactory();
+	let backendModule;
+	let backendModulePrototype = backendModulePrototypeFactory();
 
 	if (typeof backendModuleFactory !== 'function') {
 		throw new Error('backendModuleFactory is not a function');
@@ -122,8 +123,40 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 	* @todo Logic & Express.js initialization starts here
 	*/
 	if (quacksLike(backendModule, backendModulePrototype)) {
-		/* placeholder */
-		return;
-	}
-	throw new Error('Backend module is not an instance of the backend module prototype');
+    let app = express();
+    app.get('/', (req, res) => {
+      const queryParameters = Object.keys(req.query).map(key => req.query[key]);
+      switch (req.query.verb) {
+        case 'Identify':
+          /** 
+           * parameters: none
+           * exceptions: badArgument
+           */
+          if (queryParameters.length > 1) {
+            res.send('badArgument'); // Todo: exception parsing
+          }
+          verbIdentify()
+          break;
+        case 'ListMetadataFormats':
+          /**
+           * parameters: identifier (optional)
+           * exceptions: badArgument, idDoesNotExist, noMetadataFormats
+           */
+          if (queryParameters.length > 2 || queryParameters.length === 2 && !queryParameters.includes('identifier')) {
+            res.send('badArgument');
+          }
+        case 'ListSets':
+          /**
+           * parameters: resumptionToken (exclusive)
+           * exceptions: badArgument, badResumptionToken, noSetHierarchy
+           */
+        default:
+          res.status(404).send('badVerb');
+      }
+    });
+    console.log(`Server started, listening to port ${parameters.port}...`)
+    app.listen(parameters.port);
+	} else {
+    throw new Error('Backend module is not an instance of the backend module prototype');
+  }
 }
