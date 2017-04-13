@@ -51,8 +51,22 @@ describe('index', () => {
 		}).to.throw(Error, /^Mandatory parameters missing: /);
 	});
 
-	it.skip('Should throw because parameters are invalid');
-	it.skip('Should throw because creating the backend module failed');
+	it('Should throw because parameters are invalid', () => {
+		expect(() => {
+			return oaiPmhServer(simple.stub(), {
+				repositoryName: 'moro',
+				baseURL: 'http://google.com',
+				adminEmail: 6423});
+		}).to.throw(Error, /^Invalid parameters:/);
+	});
+	it('Should throw because creating the backend module failed', () => {
+		expect(() => {
+			return oaiPmhServer(simple.stub().throwWith(new Error('foo')), {
+				repositoryName: 'moro',
+				baseURL: 'http://google.com',
+				adminEmail: 'admin@hotmail.com'});
+		}).to.throw(Error, /^Creating the backend module failed: /);
+	});
 	/* An instance of the object produced oai-pmh-server-backend-module-prototype */
 
 	it('Should throw because backend module is not a valid instance', () => {
