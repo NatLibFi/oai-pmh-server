@@ -38,26 +38,26 @@ import xml from 'xml';
 */
 
 const EXCEPTIONS = {
-	badArgument: 'Illegal query parameter',
-	badResumptionToken: 'The resumption token is invalid',
-	badVerb: 'Illegal OAI verb',
-	cannotDisseminateFormat: 'The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository.',
-	idDoesNotExist: 'The value of the identifier argument is unknown or illegal in this repository.',
-	noRecordsMatch: 'The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.',
-	noMetadataFormats: 'There are no metadata formats available for the specified item.',
-	noSetHierarchy: 'The repository does not support sets.'
+  badArgument: 'Illegal query parameter',
+  badResumptionToken: 'The resumption token is invalid',
+  badVerb: 'Illegal OAI verb',
+  cannotDisseminateFormat: 'The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository.',
+  idDoesNotExist: 'The value of the identifier argument is unknown or illegal in this repository.',
+  noRecordsMatch: 'The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.',
+  noMetadataFormats: 'There are no metadata formats available for the specified item.',
+  noSetHierarchy: 'The repository does not support sets.'
 };
 
 export default function generateException(req, code) {
-	const exceptionObj =
-		{'OAI PMH': [
-			{_attr: {
-				xmlns: 'http://www.openarchives.org/OAI/2.0/',
-				'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-				'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}},
+  const exceptionObj =
+    {'OAI PMH': [
+      {_attr: {
+        xmlns: 'http://www.openarchives.org/OAI/2.0/',
+        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+        'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}},
       {responseDate: new Date().toISOString()},
       {request: req},
       {error: [{_attr: {code: code}}, EXCEPTIONS[code]]}
-		]};
-	return xml(exceptionObj, {declaration: true});
+    ]};
+  return xml(exceptionObj, {declaration: true});
 }
