@@ -33,61 +33,62 @@
 import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
 import express from 'express';
-//import xml from 'xml';
-import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
+import { List, Map } from 'immutable';
+import { HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory } from 'oai-pmh-server-backend-module-prototype';
 import generateException from './exception';
+import generateResponse from './response';
 
 const PROTOCOL_VERSION = '2.0';
-const MANDATORY_PARAMETERS = ['repositoryName', 'baseURL', 'adminEmail'];
-const DEFAULT_PARAMETERS = {
-  port: 1337,
-  description: '',
-  backendModule: {}
-};
+const MANDATORY_PARAMETERS = List(['repositoryName', 'baseURL', 'adminEmail']);
+const DEFAULT_PARAMETERS = Map({
+	port: 1337,
+	description: '',
+	backendModule: {}
+});
 
 function initParameters(parameters) {
-  const missingParameters = MANDATORY_PARAMETERS.filter(key => {
-    return !Object.hasOwnProperty.call(parameters, key);
-  });
+	const missingParameters = MANDATORY_PARAMETERS.filter(key => {
+		return !Object.hasOwnProperty.call(parameters, key);
+	});
 
-  if (missingParameters.length > 0) {
-    throw new Error('Mandatory parameters missing: ' + missingParameters.join());
-  } else {
-    parameters = Object.assign(JSON.parse(JSON.stringify(DEFAULT_PARAMETERS)), JSON.parse(JSON.stringify(parameters)));
+	if (missingParameters.size > 0) { // Note that missingParameters is an Immutable List, hence 'size' versus 'length'.
+		throw new Error('Mandatory parameters missing: ' + missingParameters.join());
+	} else {
+		parameters = Object.assign(JSON.parse(JSON.stringify(DEFAULT_PARAMETERS.toJS())), JSON.parse(JSON.stringify(parameters)));
 
-    let invalidParameters = Object.keys(parameters).filter(key => {
-      let result;
+		let invalidParameters = Object.keys(parameters).filter(key => {
+			let result;
 
-      switch (key) {
-        case 'repositoryName':
-        case 'baseURL':
-          result = typeof parameters[key] !== 'string';
-          break;
-        case 'port':
-          result = typeof parameters[key] !== 'number';
-          break;
-        case 'adminEmail':
-          result = typeof parameters[key] !== 'string' && !Array.isArray(parameters[key]);
-          break;
-        case 'description':
-          result = Object.hasOwnProperty.call(parameters, key) && typeof parameters[key] !== 'string';
-          break;
-        case 'backendModule':
-          result = Object.hasOwnProperty.call(parameters, key) && typeof parameters[key] !== 'object';
-          break;
-        default:
-          break;
-      }
+			switch (key) {
+				case 'repositoryName':
+				case 'baseURL':
+					result = typeof parameters[key] !== 'string';
+					break;
+				case 'port':
+					result = typeof parameters[key] !== 'number';
+					break;
+				case 'adminEmail':
+					result = typeof parameters[key] !== 'string' && !Array.isArray(parameters[key]);
+					break;
+				case 'description':
+					result = Object.hasOwnProperty.call(parameters, key) && typeof parameters[key] !== 'string';
+					break;
+				case 'backendModule':
+					result = Object.hasOwnProperty.call(parameters, key) && typeof parameters[key] !== 'object';
+					break;
+				default:
+					break;
+			}
 
-      return result;
-    });
+			return result;
+		});
 
-    if (invalidParameters.length > 0) {
-      throw new Error('Invalid parameters: ' + invalidParameters.join());
-    } else {
-      return parameters;
-    }
-  }
+		if (invalidParameters.length > 0) {
+			throw new Error('Invalid parameters: ' + invalidParameters.join());
+		} else {
+			return parameters;
+		}
+	}
 }
 
 /**
@@ -106,102 +107,106 @@ function initParameters(parameters) {
 * @returns {void}
 */
 export default function oaiPmhServer(backendModuleFactory, parameters) {
-  let backendModule;
-  let backendModulePrototype = backendModulePrototypeFactory();
+	let backendModule = {};
+	let backendModulePrototype = backendModulePrototypeFactory();
 
-  if (typeof backendModuleFactory !== 'function') {
-    throw new Error('backendModuleFactory is not a function');
-  }
+	if (typeof backendModuleFactory !== 'function') {
+		throw new Error('backendModuleFactory is not a function');
+	}
 
-  initParameters(typeof parameters === 'object' ? parameters : {});
+	initParameters(typeof parameters === 'object' ? parameters : {});
 
-  try {
-    backendModule = backendModuleFactory(parameters.backendModule);
-  } catch (err) {
-    throw new Error('Creating the backend module failed: ' + err.message);
-  }
+	try {
+		backendModule = backendModuleFactory(parameters.backendModule);
+	} catch (err) {
+		throw new Error('Creating the backend module failed: ' + err.message);
+	}
 
   /**
   * @todo Logic & Express.js initialization starts here
   */
-  if (quacksLike(backendModule, backendModulePrototype)) {
-    const app = express();
-    app.get('/', (req, res) => {
-      res.set('Content-Type', 'text/xml');
-      const queryParameters = Object.keys(req.query).map(key => req.query[key]);
-      switch (req.query.verb) {
-        case 'Identify':
-          /**
-           * parameters: none
-           * exceptions: badArgument
-           */
-          if (queryParameters.length > 1) {
-            res.send(generateException('badArgument'));
-          }
-          verbIdentify();
-          break;
-        case 'ListMetadataFormats':
-          /**
-           * parameters: identifier (optional)
-           * exceptions: badArgument, idDoesNotExist, noMetadataFormats
-           */
-          if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('identifier'))) {
-            res.send(generateException('badArgument'));
-          }
-          break;
-        case 'ListSets':
-          /**
-           * parameters: resumptionToken (exclusive)
-           * exceptions: badArgument, badResumptionToken, noSetHierarchy
-           */
-          break;
-        case 'ListIdentifiers':
-          /**
-           * parameters: from (optional),
-           *             until (optional),
-           *             metadataPrefix (required),
-           *             set (optional),
-           *             resumptionToken (exclusive)
-           * exceptions: badArgument,
-           *             badResumptionToken,
-           *             cannotDisseminateFormat,
-           *             noRecordsMatch,
-           *             noSetHierarchy
-           */
-          break;
-        case 'ListRecords':
-          /**
-           * parameters: from (optional),
-           *             until (optional),
-           *             metadataPrefix (required),
-           *             set (optional),
-           *             resumptionToken (exclusive)
-           * exceptions: badArgument,
-           *             badResumptionToken,
-           *             cannotDisseminateFormat,
-           *             noRecordsMatch,
-           *             noSetHierarchy
-           */
-          break;
-        case 'GetRecord':
-          /**
-           * parameters: identifier (required),
-           *             metadataPrefix (required)
-           * exceptions: badArgument,
-           *             cannotDisseminateFormat,
-           *             idDoesNotExist
-           */
-          if (queryParameters.length !== 2 || !queryParameters.includes('identifier') || !queryParameters.includes('metadataPrefix')) {
-            res.send(generateException('badArgument'));
-          }
-          break;
-        default:
-          res.send(generateException('badVerb'));
-      }
-    });
-    console.log(`Server started, listening to port ${parameters.port}...`);
-    app.listen(parameters.port);
-  } else {
-    throw new Error('Backend module is not an instance of the backend module prototype');
-  }
+	if (quacksLike(backendModule, backendModulePrototype)) {
+		const app = express();
+		app.get('/', (req, res) => {
+			res.set('Content-Type', 'text/xml');
+			const queryParameters = Object.keys(req.query).map(key => req.query[key]);
+			switch (req.query.verb) {
+				case 'Identify':
+					/**
+					 * parameters: none
+					 * exceptions: badArgument
+					 */
+
+					if (queryParameters.length > 1) {
+						res.send(generateException('badArgument'));
+					} else {
+						const capabilities = backendModulePrototype.getCapabilities();
+						res.send(generateResponse())
+					}
+					verbIdentify();
+					break;
+				case 'ListMetadataFormats':
+					/**
+					 * parameters: identifier (optional)
+					 * exceptions: badArgument, idDoesNotExist, noMetadataFormats
+					 */
+					if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('identifier'))) {
+						res.send(generateException('badArgument'));
+					}
+					break;
+				case 'ListSets':
+					/**
+					 * parameters: resumptionToken (exclusive)
+					 * exceptions: badArgument, badResumptionToken, noSetHierarchy
+					 */
+					break;
+				case 'ListIdentifiers': 
+					/** 
+					 * parameters: from (optional), 
+					 * until (optional), 
+					 * metadataPrefix (required), 
+					 * set (optional), 
+					 * resumptionToken (exclusive)
+					 * exceptions: badArgument,
+					 * badResumptionToken,
+					 * cannotDisseminateFormat,
+					 * noRecordsMatch,
+					 * noSetHierarchy 
+					 */
+					break;
+				case 'ListRecords':
+					/**
+					 * parameters: from (optional),
+					 * until (optional),
+					 * metadataPrefix (required),
+					 * set (optional),
+					 * resumptionToken (exclusive)
+					 * exceptions: badArgument,
+					 * badResumptionToken,
+					 * cannotDisseminateFormat,
+					 * noRecordsMatch,
+					 * noSetHierarchy
+					 */
+					break;
+				case 'GetRecord':
+					/**
+					 * parameters: identifier (required),
+					 * metadataPrefix (required)
+					 * exceptions: badArgument,
+					 * cannotDisseminateFormat,
+					 * idDoesNotExist
+					 */ 
+					if (queryParameters.length !== 3 || !queryParameters.includes('identifier') || !queryParameters.includes('metadataPrefix')) {
+						res.send(generateException('badArgument'));
+					}
+					break;
+				default:
+					res.send(generateException('badVerb'));
+			}
+		});
+		console.log(`Server started, listening to port ${parameters.port}...`);
+		app.listen(parameters.port);
+	} else {
+		throw new Error('Backend module is not an instance of the backend module prototype');
+	}
 }
