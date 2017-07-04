@@ -32,19 +32,8 @@
 
 import xml from 'xml';
 
-const EXCEPTIONS = {
-	badArgument: 'Illegal query parameter',
-	badResumptionToken: 'The resumption token is invalid',
-	badVerb: 'Illegal OAI verb',
-	cannotDisseminateFormat: 'The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository.',
-	idDoesNotExist: 'The value of the identifier argument is unknown or illegal in this repository.',
-	noRecordsMatch: 'The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.',
-	noMetadataFormats: 'There are no metadata formats available for the specified item.',
-	noSetHierarchy: 'The repository does not support sets.'
-};
-
-function generateException(req, code) {
-	const exceptionObj = {
+function generateResponse(req, code) {
+	const responseObj = {
 		'OAI-PMH': [
 			{_attr:
 			{xmlns: 'http://www.openarchives.org/OAI/2.0/',
@@ -53,9 +42,10 @@ function generateException(req, code) {
 			},
 			{responseDate: new Date().toISOString()},
 			{request: req},
-			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
+			{error: [{_attr: {code}}, EXCEPTIONS.code]}
 		]};
-	return xml(exceptionObj, {declaration: true});
+	return xml(responseObj, {declaration: true});
 }
 
-export default generateException;
+export default generateResponse;
+
