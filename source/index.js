@@ -34,8 +34,7 @@ import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
 import express from 'express';
 import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
-import generateException from './exception';
-import generateResponse from './response';
+import { generateResponse, generateException } from './response';
 
 const PROTOCOL_VERSION = '2.0';
 const MANDATORY_PARAMETERS = ['repositoryName', 'baseURL', 'adminEmail'];
@@ -60,6 +59,8 @@ function initParameters(parameters) {
 
 			switch (key) {
 				case 'repositoryName':
+					result = typeof parameters[key] !== 'string';
+					break;
 				case 'baseURL':
 					result = typeof parameters[key] !== 'string';
 					break;
