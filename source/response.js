@@ -32,8 +32,36 @@
 
 import xml from 'xml';
 
+const EXCEPTIONS = {
+	badArgument: 'Illegal query parameter',
+	badResumptionToken: 'The resumption token is invalid',
+	badVerb: 'Illegal OAI verb',
+	cannotDisseminateFormat: 'The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository.',
+	idDoesNotExist: 'The value of the identifier argument is unknown or illegal in this repository.',
+	noRecordsMatch: 'The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.',
+	noMetadataFormats: 'There are no metadata formats available for the specified item.',
+	noSetHierarchy: 'The repository does not support sets.'
+};
+
 function generateResponse(req, code) {
-	const responseObj = {
+	return null;
+}
+
+
+function generateException(req, code) {
+	/**
+	 * Validate the arguments.
+	 */
+	if (req === undefined || code === undefined) {
+		throw new Error(`Function arguments are missing: request ${req}, code: ${code}`);
+	}
+	if (Object.keys(EXCEPTIONS).indexOf(code) === -1) {
+		throw new Error(`Unknown exception type: ${code}`);
+	}
+	if (!(req instanceof Object)) {
+		throw new Error(`Invalid request: ${req}`);
+	}
+	const exceptionObj = {
 		'OAI-PMH': [
 			{_attr:
 			{xmlns: 'http://www.openarchives.org/OAI/2.0/',
@@ -42,10 +70,9 @@ function generateResponse(req, code) {
 			},
 			{responseDate: new Date().toISOString()},
 			{request: req},
-			{error: [{_attr: {code}}, EXCEPTIONS.code]}
+			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
 		]};
-	return xml(responseObj, {declaration: true});
+	return xml(exceptionObj, {declaration: true});
 }
 
-export default generateResponse;
-
+export { generateException, generateResponse };

@@ -37,7 +37,8 @@
 import {expect, request} from 'chai';
 import simple from 'simple-mock';
 import oaiPmhServer from '../source/index';
-import { backendModulePrototypeFactory } from 'oai-pmh-server-backend-module-prototype';
+import { generateException, generateResponse } from '../source/response';
+import {backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
 
 describe('index', () => {
 	it('Should throw because backend module factory is not a function', () => {
@@ -80,19 +81,19 @@ describe('index', () => {
 		}).to.throw(Error, /^Backend module is not an instance of the backend module prototype$/);
 	});
 
-  const parameters = {
-    repositoryName: 'foo',
-    baseURL: 'http://localhost',
-    adminEmail: 'foo@bar.com'
-  };
+	const parameters = {
+		repositoryName: 'foo',
+		baseURL: 'http://localhost',
+		adminEmail: 'foo@bar.com'
+	};
 
-  //const factory = backendModulePrototypeFactory();
+  // Const factory = backendModulePrototypeFactory();
 
-  describe('app', () => {
-	  describe.skip('#Identify');
-		describe.skip('#ListSets');
-		describe.skip('#ListMetadataFormats');
-		describe.skip('#ListIdentifiers');
-		describe.skip('#ListRecords');
-	});
+//	describe('app', () => {
+//	  describe.skip('#Identify');
+//		describe.skip('#ListSets');
+//		describe.skip('#ListMetadataFormats');
+//		describe.skip('#ListIdentifiers');
+//		describe.skip('#ListRecords');
+//	});
 });
