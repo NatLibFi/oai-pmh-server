@@ -30,11 +30,11 @@
 
 'use strict';
 
-import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
+//import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
 import express from 'express';
-import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
-import { generateResponse, generateException } from './response';
+import { HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory } from 'oai-pmh-server-backend-module-prototype';
+import { generateException, generateResponse } from './response';
 
 const PROTOCOL_VERSION = '2.0';
 const MANDATORY_PARAMETERS = ['repositoryName', 'baseURL', 'adminEmail'];
@@ -97,7 +97,7 @@ function initParameters(parameters) {
 
 /**
  * Run the OAI-PMH server
- * @param {oai-pmh-server-backend-module-prototype} backendModuleFactory - Factory function used to create the backend  module
+ * @param {oai-pmh-server-backend-module-prototype} backendModuleFactory - Factory function used to create the backend module
  * @param {object} parameters - Parameters for the server and the backend module factory. For the server parameters see  @{link https://www.openarchives.org/OAI/openarchivesprotocol.html#Identify}
  * @param {number} parameters.port - Port the server listens on
  * @param {string} parameters.repositoryName - A human readable name for the repository
@@ -108,6 +108,7 @@ function initParameters(parameters) {
  * @returns {void}
  */
 export default function oaiPmhServer(backendModuleFactory, parameters) {
+
 	let backendModule = {};
 	const backendModulePrototype = backendModulePrototypeFactory();
 
@@ -115,10 +116,10 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 		throw new TypeError('backendModuleFactory is not a function');
 	}
 
-	initParameters(typeof parameters === 'object' ? parameters : {});
+	parameters = initParameters(typeof parameters === 'object' ? parameters : {});
 
 	try {
-		backendModule = backendModuleFactory(parameters.backendModule);
+ 		backendModule = backendModuleFactory(parameters.backendModule);
 	} catch (err) {
 		throw new Error('Creating the backend module failed: ' + err.message);
 	}
@@ -130,6 +131,9 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 		const app = express();
 		app.get('/', (req, res) => {
 			res.set('Content-Type', 'text/xml');
+			/**
+			 * All provided query parameters are collected into the 'queryParameters' array.
+			 */
 			const queryParameters = Object.keys(req.query).map(key => req.query[key]);
 			switch (req.query.verb) {
 				case 'Identify':

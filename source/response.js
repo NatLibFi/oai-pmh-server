@@ -47,10 +47,15 @@ function generateResponse(req, code) {
 	return null;
 }
 
-
+/**
+ * Generate an XML exception.
+ * @param {object} req - An HTTP request object
+ * @param {string} code - The OAI-PMH error code
+ * @returns {string}
+ */
 function generateException(req, code) {
 	/**
-	 * Validate the arguments.
+	 * Validate the argument types.
 	 */
 	if (req === undefined || code === undefined) {
 		throw new Error(`Function arguments are missing: request ${req}, code: ${code}`);
@@ -59,17 +64,20 @@ function generateException(req, code) {
 		throw new Error(`Unknown exception type: ${code}`);
 	}
 	if (!(req instanceof Object)) {
-		throw new Error(`Invalid request: ${req}`);
+		throw new Error(`Invalid request: ${req}`);;
+	}
+	if (!Object.hasOwnProperty.call(req, 'originalUrl')) {
+		throw new Error(`No original URL provided in request: ${req}`);
 	}
 	const exceptionObj = {
 		'OAI-PMH': [
 			{_attr:
-			{xmlns: 'http://www.openarchives.org/OAI/2.0/',
-				'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-				'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
-			},
+				{xmlns: 'http://www.openarchives.org/OAI/2.0/',
+					'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+					'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
+				},
 			{responseDate: new Date().toISOString()},
-			{request: req},
+			{request: req.originalUrl},
 			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
 		]};
 	return xml(exceptionObj, {declaration: true});

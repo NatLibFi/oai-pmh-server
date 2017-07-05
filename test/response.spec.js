@@ -36,10 +36,13 @@ import { generateException, generateResponse } from '../source/response';
 
 chai.use(chaiXml);
 
+const dummyRequest = { 'originalUrl': 'http://melinda.kansalliskirjasto.fi/api?search=metallica' };
+const erroneousDummyRequest = { 'auto': 'Audi' };
+
 describe('responses', () => {
-	it('Should throw because the error type is invalid', () => {
+	it('Should throw because the provided error type is invalid', () => {
 		expect(() => {
-			return generateException({}, 'argumentMissing');
+			return generateException(dummyRequest, 'argumentMissing');
 		}).to.throw(Error, /^Unknown exception type: argumentMissing$/);
 	});
 
@@ -55,16 +58,34 @@ describe('responses', () => {
 		}).to.throw(Error, /^Invalid request: Numa numa jee$/);
 	});
 
-	const testException = generateException({}, 'badVerb');
-	const otherTestException = generateException({}, 'badVerb');
-
-	it('Should return a valid XML response', () => {
-		expect(testException).xml.to.be.valid();
-		expect(otherTestException).xml.to.be.valid();
-		expect(generateException({}, 'badResumptionToken')).xml.to.be.valid();
+	it('Should throw because the provided request does not contain original query URL', () => {
+		expect(() => {
+			return generateException(erroneousDummyRequest, 'badVerb');
+		}).to.throw(Error, /^No original URL provided in request:/);
 	});
 
-	it('Should fail because two responses should not be equal due to difference in timestamps', () => {
-		expect(testException).to.not.equal(otherTestException);
+	// DEBUG:
+	console.log(generateException(dummyRequest, 'badVerb'))
+
+	it('Should return a valid XML response', () => {
+		expect(generateException(dummyRequest, 'badArgument')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'badVerb')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'badResumptionToken')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'cannotDisseminateFormat')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'idDoesNotExist')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'noRecordsMatch')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'noMetadataFormats')).xml.to.be.valid();
+		expect(generateException(dummyRequest, 'noSetHierarchy')).xml.to.be.valid();
+	});
+
+	const testException = generateException(dummyRequest, 'badVerb');
+	const otherTestException = generateException(dummyRequest, 'badVerb');
+
+//	it('Exceptions created right after each other with same parameters should not be equal', () => {
+//		expect(testException).to.not.equal(otherTestException);
+//	});
+
+	it('Exceptions created with different codes should look different', () => {
+		expect(testException).to.not.equal(generateException(dummyRequest, 'badArgument'));
 	});
 });

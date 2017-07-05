@@ -30,15 +30,12 @@
 
 'use strict';
 
-/**
-* Disabled until needed
-* import {get as httpGet} from 'http';
-*/
-import {expect, request} from 'chai';
+import { expect, request } from 'chai';
 import simple from 'simple-mock';
+import { get as httpGet } from 'http';
 import oaiPmhServer from '../source/index';
 import { generateException, generateResponse } from '../source/response';
-import {backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
+import { factory } from 'oai-pmh-server-backend-module-prototype';
 
 describe('index', () => {
 	it('Should throw because backend module factory is not a function', () => {
@@ -69,6 +66,7 @@ describe('index', () => {
 				adminEmail: 'admin@hotmail.com'});
 		}).to.throw(Error, /^Creating the backend module failed: /);
 	});
+
 	/* An instance of the object produced oai-pmh-server-backend-module-prototype */
 
 	it('Should throw because backend module is not a valid instance', () => {
@@ -87,13 +85,34 @@ describe('index', () => {
 		adminEmail: 'foo@bar.com'
 	};
 
-  // Const factory = backendModulePrototypeFactory();
+	it('Should be able to create the OAI-PMH server', () => {
+		expect(() => {
+			return oaiPmhServer(factory, parameters);
+		}).to.be.a('function');
+	});
 
-//	describe('app', () => {
+	const app = oaiPmhServer(factory, parameters);
+
+	describe('app', () => {
+		before(() => {
+			app();
+		});
+
+		it('Should get a response for a HTTP request', () => {
+			expect(() => {
+				http.get('http://localhost:1337/', (err, res, body) => {
+					console.log(res);
+				});
+			})
+		});
+
+		after(() => {
+			app.close();
+		});
 //	  describe.skip('#Identify');
 //		describe.skip('#ListSets');
 //		describe.skip('#ListMetadataFormats');
 //		describe.skip('#ListIdentifiers');
 //		describe.skip('#ListRecords');
-//	});
+	});
 });
