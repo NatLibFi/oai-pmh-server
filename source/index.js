@@ -135,6 +135,11 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 			 * All provided query parameters are collected into the 'queryParameters' array.
 			 */
 			const queryParameters = Object.keys(req.query).map(key => req.query[key]);
+			// DEBUG
+			//console.log("Req.query: " + req.query)
+			//console.log("Queryparameters" + queryParameters)
+			//console.log("req.query.verb" + req.query.verb)
+			//
 			switch (req.query.verb) {
 				case 'Identify':
 					/**
@@ -142,12 +147,11 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * exceptions: badArgument
 					 */
 					if (queryParameters.length > 1) {
-						res.send(generateException('badArgument'));
+						res.send(generateException(req, 'badArgument'));
 					} else {
 						const capabilities = backendModulePrototype.getCapabilities();
 						res.send(generateResponse());
 					}
-					verbIdentify();
 					break;
 				case 'ListMetadataFormats':
 					/**
@@ -201,13 +205,18 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * idDoesNotExist
 					 */
 					if (queryParameters.length !== 3 || !queryParameters.includes('identifier') || !queryParameters.includes('metadataPrefix')) {
-						res.send(generateException('badArgument'));
+						res.send(generateException(req, 'badArgument'));
 					}
 					break;
 				default:
-					res.send(generateException('badVerb'));
+					//DEBUG:
+					res.send(generateException(req, 'badVerb'));
 			}
 		});
+		app.get('/test', (req, res) => {
+			res.send("moi")
+		});
+		console.log("INITIATED")
 		console.log(`Server started, listening to port ${parameters.port}...`);
 		app.listen(parameters.port);
 	} else {

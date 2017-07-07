@@ -1,41 +1,46 @@
 /**
-*
-* @licstart  The following is the entire license notice for the JavaScript code in this file.
-*
-* Modular OAI-PMH server
-*
-* Copyright (C) 2017 University Of Helsinki (The National Library Of Finland)
-*
-* This file is part of oai-pmh-server
-*
-* oai-pmh-server program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as
-* published by the Free Software Foundation, either version 3 of the
-* License, or (at your option) any later version.
-*
-* oai-pmh-server is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-* @licend  The above is the entire license notice
-* for the JavaScript code in this file.
-*
-*/
+ *
+ * @licstart  The following is the entire license notice for the JavaScript code in this file.
+ *
+ * Modular OAI-PMH server
+ *
+ * Copyright (C) 2017 University Of Helsinki (The National Library Of Finland)
+ *
+ * This file is part of oai-pmh-server
+ *
+ * oai-pmh-server program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * oai-pmh-server is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @licend  The above is the entire license notice
+ * for the JavaScript code in this file.
+ *
+ */
 
 /* eslint-disable no-undef, max-nested-callbacks, no-unused-expressions */
 
 'use strict';
 
-import { expect, request } from 'chai';
+import chai, { expect, request } from 'chai';
 import simple from 'simple-mock';
 import { get as httpGet } from 'http';
+import chaiHttp from 'chai-http';
+import chaiXml from 'chai-xml';
 import oaiPmhServer from '../source/index';
 import { generateException, generateResponse } from '../source/response';
 import { factory } from 'oai-pmh-server-backend-module-prototype';
+
+chai.use(chaiHttp);
+chai.use(chaiXml);
 
 describe('index', () => {
 	it('Should throw because backend module factory is not a function', () => {
@@ -78,41 +83,36 @@ describe('index', () => {
 			});
 		}).to.throw(Error, /^Backend module is not an instance of the backend module prototype$/);
 	});
+});
 
+describe('Server functionality', () =>{
 	const parameters = {
 		repositoryName: 'foo',
 		baseURL: 'http://localhost',
 		adminEmail: 'foo@bar.com'
 	};
 
-	it('Should be able to create the OAI-PMH server', () => {
-		expect(() => {
-			return oaiPmhServer(factory, parameters);
-		}).to.be.a('function');
+	oaiPmhServer(factory, parameters);
+
+	it('Should get a valid response for a HTTP request', (done) => {
+		chai.request("http://localhost:1337")
+			.get('/')
+			.query({verb: 'Identify'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				done();
+			});
 	});
 
-	const app = oaiPmhServer(factory, parameters);
-
-	describe('app', () => {
-		before(() => {
-			app();
-		});
-
-		it('Should get a response for a HTTP request', () => {
-			expect(() => {
-				http.get('http://localhost:1337/', (err, res, body) => {
-					console.log(res);
-				});
-			})
-		});
-
-		after(() => {
-			app.close();
-		});
-//	  describe.skip('#Identify');
-//		describe.skip('#ListSets');
-//		describe.skip('#ListMetadataFormats');
-//		describe.skip('#ListIdentifiers');
-//		describe.skip('#ListRecords');
+	it('Should get a proper XML error response with a bad parameter', (done) => {
+		chai.request("http://localhost:1337")
+			.get('/')
+			.query({verb: 'Identify', audi: 'Das Auto'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
 	});
 });

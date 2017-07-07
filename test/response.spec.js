@@ -65,7 +65,7 @@ describe('responses', () => {
 	});
 
 	// DEBUG:
-	console.log(generateException(dummyRequest, 'badVerb'))
+	//console.log(generateException(dummyRequest, 'badVerb'))
 
 	it('Should return a valid XML response', () => {
 		expect(generateException(dummyRequest, 'badArgument')).xml.to.be.valid();
