@@ -30,11 +30,11 @@
 
 'use strict';
 
-//import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
+// Import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
 import express from 'express';
-import { HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory } from 'oai-pmh-server-backend-module-prototype';
-import { generateException, generateResponse } from './response';
+import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
+import {generateException, generateResponse} from './response';
 
 const PROTOCOL_VERSION = '2.0';
 const MANDATORY_PARAMETERS = ['repositoryName', 'baseURL', 'adminEmail'];
@@ -79,7 +79,6 @@ function initParameters(parameters) {
 				default:
 					break;
 			}
-
 			return result;
 		});
 
@@ -108,7 +107,6 @@ function initParameters(parameters) {
  * @returns {void}
  */
 export default function oaiPmhServer(backendModuleFactory, parameters) {
-
 	let backendModule = {};
 	const backendModulePrototype = backendModulePrototypeFactory();
 
@@ -119,7 +117,7 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 	parameters = initParameters(typeof parameters === 'object' ? parameters : {});
 
 	try {
- 		backendModule = backendModuleFactory(parameters.backendModule);
+		backendModule = backendModuleFactory(parameters.backendModule);
 	} catch (err) {
 		throw new Error('Creating the backend module failed: ' + err.message);
 	}
@@ -136,10 +134,9 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 			 */
 			const queryParameters = Object.keys(req.query).map(key => req.query[key]);
 			// DEBUG
-			//console.log("Req.query: " + req.query)
-			//console.log("Queryparameters" + queryParameters)
-			//console.log("req.query.verb" + req.query.verb)
-			//
+			// console.log("Queryparameters: " + queryParameters)
+			// console.log("req.query.verb" + req.query.verb)
+			// console.log(parameters)
 			switch (req.query.verb) {
 				case 'Identify':
 					/**
@@ -149,8 +146,21 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					if (queryParameters.length > 1) {
 						res.send(generateException(req, 'badArgument'));
 					} else {
-						const capabilities = backendModulePrototype.getCapabilities();
-						res.send(generateResponse());
+						backendModule.getCapabilities().then(capabilities => {
+							const responseContent = {
+								Identify: [
+									{repositoryName: parameters.repositoryName},
+									{baseURL: parameters.baseURL},
+									{protocolVersion: PROTOCOL_VERSION},
+									{adminEmail: parameters.adminEmail},
+									{earliestDatestamp: capabilities.earliestDatestamp},
+									{deletedRecord: capabilities.deletedRecordsSupport},
+									{granularity: capabilities.harvestingGranularity}
+								]
+							};
+							res.send(generateResponse(req, responseContent));
+							// Console.log(generateResponse(req, responseContent))
+						});
 					}
 					break;
 				case 'ListMetadataFormats':
@@ -159,7 +169,21 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * exceptions: badArgument, idDoesNotExist, noMetadataFormats
 					 */
 					if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('identifier'))) {
-						res.send(generateException('badArgument'));
+						res.send(generateException(req, 'badArgument'));
+					} else {
+						backendModule.getMetadataFormats().then(formats => {
+							const responseContent = {
+								ListMetadataFormats: formats.map(format => {
+									return {metadataFormat: [
+										{metadataPrefix: format.prefix},
+										{schema: format.schema},
+										{metadataNamespace: format.namespace}
+									]};
+								})
+							};
+							res.send(generateResponse(req, responseContent));
+							console.log(generateResponse(req, responseContent));
+						});
 					}
 					break;
 				case 'ListSets':
@@ -167,6 +191,11 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * Parameters: resumptionToken (exclusive)
 					 * exceptions: badArgument, badResumptionToken, noSetHierarchy
 					 */
+					if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('resumptionToken'))) {
+						res.send(generateException(req, 'badArgument'));
+					} else {
+						res.send(generateResponse(req, parameters, backendModule));
+					}
 					break;
 				case 'ListIdentifiers':
 					/**
@@ -175,6 +204,7 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * metadataPrefix (required),
 					 * set (optional),
 					 * resumptionToken (exclusive)
+					 *
 					 * exceptions: badArgument,
 					 * badResumptionToken,
 					 * cannotDisseminateFormat,
@@ -189,6 +219,7 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * metadataPrefix (required),
 					 * set (optional),
 					 * resumptionToken (exclusive)
+					 *
 					 * exceptions: badArgument,
 					 * badResumptionToken,
 					 * cannotDisseminateFormat,
@@ -206,17 +237,14 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 */
 					if (queryParameters.length !== 3 || !queryParameters.includes('identifier') || !queryParameters.includes('metadataPrefix')) {
 						res.send(generateException(req, 'badArgument'));
+					} else {
+						res.send(generateResponse(req, parameters, backendModule));
 					}
 					break;
 				default:
-					//DEBUG:
 					res.send(generateException(req, 'badVerb'));
 			}
 		});
-		app.get('/test', (req, res) => {
-			res.send("moi")
-		});
-		console.log("INITIATED")
 		console.log(`Server started, listening to port ${parameters.port}...`);
 		app.listen(parameters.port);
 	} else {

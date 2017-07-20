@@ -30,14 +30,14 @@
 
 'use strict';
 
-import chai, { expect, request } from 'chai';
+import chai, {expect, request} from 'chai';
 import simple from 'simple-mock';
-import { get as httpGet } from 'http';
+import {get as httpGet} from 'http';
 import chaiHttp from 'chai-http';
 import chaiXml from 'chai-xml';
 import oaiPmhServer from '../source/index';
-import { generateException, generateResponse } from '../source/response';
-import { factory } from 'oai-pmh-server-backend-module-prototype';
+import {generateException, generateResponse} from '../source/response';
+import {factory} from 'oai-pmh-server-backend-module-prototype';
 
 chai.use(chaiHttp);
 chai.use(chaiXml);
@@ -85,28 +85,30 @@ describe('index', () => {
 	});
 });
 
-describe('Server functionality', () =>{
-	const parameters = {
-		repositoryName: 'foo',
-		baseURL: 'http://localhost',
-		adminEmail: 'foo@bar.com'
-	};
+// Run the server
+const parameters = {
+	repositoryName: 'foo',
+	baseURL: 'http://localhost',
+	adminEmail: 'foo@bar.com'
+};
 
-	oaiPmhServer(factory, parameters);
+oaiPmhServer(factory, parameters);
 
-	it('Should get a valid response for a HTTP request', (done) => {
-		chai.request("http://localhost:1337")
+describe('OAI-PMH verbs: Identify', () => {
+	it('Should get a valid response for a HTTP request', done => {
+		chai.request('http://localhost:1337')
 			.get('/')
 			.query({verb: 'Identify'})
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
 				done();
 			});
 	});
 
-	it('Should get a proper XML error response with a bad parameter', (done) => {
-		chai.request("http://localhost:1337")
+	it('Should get a proper XML error response with a bad parameter', done => {
+		chai.request('http://localhost:1337')
 			.get('/')
 			.query({verb: 'Identify', audi: 'Das Auto'})
 			.end((err, res) => {
@@ -115,4 +117,126 @@ describe('Server functionality', () =>{
 				done();
 			});
 	});
+
+	it('Should respond with properly formatted XML to Identify', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'Identify'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+});
+
+describe('OAI-PMH verbs: ListMetadataFormats', () => {
+	it('Should return a properly formatted XML response', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'ListMetadataFormats'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+	it('Should get a proper XML error response with a bad parameter', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'ListMetadataFormats', metal: 'Open sesame'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+});
+
+describe('OAI-PMH verbs: GetRecord', () => {
+	it('Should get a proper XML error response with a missing parameters', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'GetRecord'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+
+	it('Should get a proper XML error response with a bad parameters', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'GetRecord', metal: 'Open sesame', yamma: 'Flamma', babu: 'Lambda'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+
+	it.skip('Should return a record in the desired format');
+});
+
+describe('OAI-PMH verbs: ListSets', () => {
+	it('Should get a proper XML error response with a missing parameters', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'ListSets'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+
+	it('Should get a proper XML error response with a bad parameters', done => {
+		chai.request('http://localhost:1337')
+			.get('/')
+			.query({verb: 'ListSets', metadataPrefix: 'ummagumma'})
+			.end((err, res) => {
+				expect(err).to.be.null;
+				expect(res).to.have.status(200);
+				expect(res.text).to.be.valid.xml;
+				done();
+			});
+	});
+});
+
+describe('OAI-PMH verbs: ListIdentifiers', () => {
+
+	// It('Should get a proper XML error response with a missing parameters', (done) => {
+	//	chai.request("http://localhost:1337")
+	//		.get('/')
+	//		.query({verb: 'ListIdentifiers'})
+	//		.end((err, res) => {
+	//			expect(err).to.be.null;
+	//			expect(res).to.have.status(200);
+	//			expect(res.text).to.be.valid.xml;
+	//			done();
+	//		});
+	// });
+
+});
+
+describe('OAI-PMH verbs: ListRecords', () => {
+
+	// It('Should get a proper XML error response with a missing parameters', (done) => {
+	//	chai.request("http://localhost:1337")
+	//		.get('/')
+	//		.query({verb: 'ListRecords'})
+	//		.end((err, res) => {
+	//			expect(err).to.be.null;
+	//			expect(res).to.have.status(200);
+	//			expect(res.text).to.be.valid.xml;
+	//			done();
+	//		});
+	// });
+
 });

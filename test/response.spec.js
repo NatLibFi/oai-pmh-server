@@ -32,12 +32,12 @@
 
 import chai, {expect, request} from 'chai';
 import chaiXml from 'chai-xml';
-import { generateException, generateResponse } from '../source/response';
+import {generateException, generateResponse} from '../source/response';
 
 chai.use(chaiXml);
 
-const dummyRequest = { 'originalUrl': 'http://melinda.kansalliskirjasto.fi/api?search=metallica' };
-const erroneousDummyRequest = { 'auto': 'Audi' };
+const dummyRequest = {originalUrl: 'http://melinda.kansalliskirjasto.fi/api?search=metallica'};
+const erroneousDummyRequest = {auto: 'Audi'};
 
 describe('responses', () => {
 	it('Should throw because the provided error type is invalid', () => {
@@ -65,7 +65,7 @@ describe('responses', () => {
 	});
 
 	// DEBUG:
-	//console.log(generateException(dummyRequest, 'badVerb'))
+	// console.log(generateException(dummyRequest, 'badVerb'))
 
 	it('Should return a valid XML response', () => {
 		expect(generateException(dummyRequest, 'badArgument')).xml.to.be.valid();
@@ -81,7 +81,7 @@ describe('responses', () => {
 	const testException = generateException(dummyRequest, 'badVerb');
 	const otherTestException = generateException(dummyRequest, 'badVerb');
 
-//	it('Exceptions created right after each other with same parameters should not be equal', () => {
+//	It('Exceptions created right after each other with same parameters should not be equal', () => {
 //		expect(testException).to.not.equal(otherTestException);
 //	});
 

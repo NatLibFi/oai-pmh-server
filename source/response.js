@@ -30,6 +30,7 @@
 
 'use strict';
 
+import url from 'url';
 import xml from 'xml';
 
 const EXCEPTIONS = {
@@ -43,8 +44,40 @@ const EXCEPTIONS = {
 	noSetHierarchy: 'The repository does not support sets.'
 };
 
-function generateResponse(req, code) {
-	return null;
+const responseTemplate = {
+	'OAI-PMH': [
+		{_attr:
+		{xmlns: 'http://www.openarchives.org/OAI/2.0/',
+			'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+			'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
+		},
+		{responseDate: new Date().toISOString()}
+	]};
+
+/**
+ * Parse a full http request string.
+ * @param {object} req - A HTTP request object
+ * @returns {string}
+ */
+const parseFullUrl = req => {
+	return url.format({
+		protocol: req.protocol,
+		host: req.get('host')
+	}) + req.originalUrl;
+};
+
+/**
+ * Parse and return an XML response to request.
+ * @param {object} req - An HTTP request object
+ * @param {object} parameters - A parameters object
+ * @param {object} backendModule - The backend module
+ * @returns {string}
+ */
+function generateResponse(req, responseContent) {
+	const newResponse = JSON.parse(JSON.stringify(responseTemplate));
+	newResponse['OAI-PMH'].push({request: [{_attr: {verb: req.query.verb}}, parseFullUrl(req)]});
+	newResponse['OAI-PMH'].push(responseContent);
+	return xml(newResponse, {declaration: true});
 }
 
 /**
@@ -53,7 +86,7 @@ function generateResponse(req, code) {
  * @param {string} code - The OAI-PMH error code
  * @returns {string}
  */
-function generateException(req, code) {
+const generateException = (req, code) => {
 	/**
 	 * Validate the argument types.
 	 */
@@ -64,23 +97,29 @@ function generateException(req, code) {
 		throw new Error(`Unknown exception type: ${code}`);
 	}
 	if (!(req instanceof Object)) {
-		throw new Error(`Invalid request: ${req}`);;
+		throw new TypeError(`Invalid request: ${req}`);
 	}
 	if (!Object.hasOwnProperty.call(req, 'originalUrl')) {
 		throw new Error(`No original URL provided in request: ${req}`);
 	}
-	const exceptionObj = {
-		'OAI-PMH': [
-			{_attr:
-				{xmlns: 'http://www.openarchives.org/OAI/2.0/',
-					'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-					'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
-				},
-			{responseDate: new Date().toISOString()},
-			{request: req.originalUrl},
-			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
-		]};
-	return xml(exceptionObj, {declaration: true});
-}
+//	Const exceptionObj = {
+//		'OAI-PMH': [
+//			{_attr:
+//				{xmlns: 'http://www.openarchives.org/OAI/2.0/',
+//					'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+//					'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
+//			},
+//			{responseDate: new Date().toISOString()},
+//			{request: req.originalUrl},
+//			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
+//		]};
 
-export { generateException, generateResponse };
+	const newException = JSON.parse(JSON.stringify(responseTemplate));
+	newException['OAI-PMH'].push({request: req.originalUrl});
+	newException['OAI-PMH'].push({error: [{_attr: {code}}, EXCEPTIONS[code]]});
+	// Console.log(newException)
+	// console.log(responseTemplate)
+	return xml(newException, {declaration: true});
+};
+
+export {generateException, generateResponse};
