@@ -30,14 +30,13 @@
 
 'use strict';
 
-import chai, {expect, request} from 'chai';
+// Import {get as httpGet} from 'http';
+import chai, {expect} from 'chai';
 import simple from 'simple-mock';
-import {get as httpGet} from 'http';
 import chaiHttp from 'chai-http';
 import chaiXml from 'chai-xml';
-import oaiPmhServer from '../source/index';
-import {generateException, generateResponse} from '../source/response';
 import {factory} from 'oai-pmh-server-backend-module-prototype';
+import oaiPmhServer from '../source/index';
 
 chai.use(chaiHttp);
 chai.use(chaiXml);
@@ -102,7 +101,7 @@ describe('OAI-PMH verbs: Identify', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -113,7 +112,7 @@ describe('OAI-PMH verbs: Identify', () => {
 			.query({verb: 'Identify', audi: 'Das Auto'})
 			.end((err, res) => {
 				expect(err).to.be.null;
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -124,7 +123,7 @@ describe('OAI-PMH verbs: Identify', () => {
 			.query({verb: 'Identify'})
 			.end((err, res) => {
 				expect(err).to.be.null;
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -134,14 +133,15 @@ describe('OAI-PMH verbs: ListMetadataFormats', () => {
 	it('Should return a properly formatted XML response', done => {
 		chai.request('http://localhost:1337')
 			.get('/')
-			.query({verb: 'ListMetadataFormats'})
+			.query({verb: 'ListMetadataFormats', identifier: 'oai:HUBerlin.de:3000218'})
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
+
 	it('Should get a proper XML error response with a bad parameter', done => {
 		chai.request('http://localhost:1337')
 			.get('/')
@@ -149,7 +149,7 @@ describe('OAI-PMH verbs: ListMetadataFormats', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -163,7 +163,7 @@ describe('OAI-PMH verbs: GetRecord', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -175,7 +175,7 @@ describe('OAI-PMH verbs: GetRecord', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid;
 				done();
 			});
 	});
@@ -191,7 +191,7 @@ describe('OAI-PMH verbs: ListSets', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid();
 				done();
 			});
 	});
@@ -203,7 +203,7 @@ describe('OAI-PMH verbs: ListSets', () => {
 			.end((err, res) => {
 				expect(err).to.be.null;
 				expect(res).to.have.status(200);
-				expect(res.text).to.be.valid.xml;
+				expect(res.text).xml.to.be.valid();
 				done();
 			});
 	});

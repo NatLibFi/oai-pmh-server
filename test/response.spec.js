@@ -30,9 +30,9 @@
 
 'use strict';
 
-import chai, {expect, request} from 'chai';
+import chai, {expect} from 'chai';
 import chaiXml from 'chai-xml';
-import {generateException, generateResponse} from '../source/response';
+import {generateException} from '../source/response';
 
 chai.use(chaiXml);
 
@@ -79,7 +79,7 @@ describe('responses', () => {
 	});
 
 	const testException = generateException(dummyRequest, 'badVerb');
-	const otherTestException = generateException(dummyRequest, 'badVerb');
+	// Const otherTestException = generateException(dummyRequest, 'badVerb');
 
 //	It('Exceptions created right after each other with same parameters should not be equal', () => {
 //		expect(testException).to.not.equal(otherTestException);

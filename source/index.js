@@ -33,6 +33,7 @@
 // Import 'babel-polyfill'; // eslint-disable-line import/no-unassigned-import
 import quacksLike from 'little-quacker';
 import express from 'express';
+import {findKey} from 'lodash';
 import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
 import {generateException, generateResponse} from './response';
 
@@ -90,6 +91,10 @@ function initParameters(parameters) {
 	}
 }
 
+function hasKey(object, key) {
+	return Object.prototype.hasOwnProperty.call(object, key);
+}
+
 /**
  * @external {oai-pmh-server-backend-module-prototype} https://github.com/natlibfi/oai-pmh-server-backend-module-prototype.wiki/API
  */
@@ -137,6 +142,11 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 			// console.log("Queryparameters: " + queryParameters)
 			// console.log("req.query.verb" + req.query.verb)
 			// console.log(parameters)
+
+			/**
+			 * A list of possible parameters that ListIdentifiers or ListRecords can take.
+			 */
+			const possibleParams = ['verb', 'from', 'until', 'metadataPrefix', 'set', 'resumptionToken'];
 			switch (req.query.verb) {
 				case 'Identify':
 					/**
@@ -168,10 +178,11 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * Parameters: identifier (optional)
 					 * exceptions: badArgument, idDoesNotExist, noMetadataFormats
 					 */
-					if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('identifier'))) {
+					if (queryParameters.length > 2 || (queryParameters.length === 2 && !hasKey(req.query, 'identifier'))) {
 						res.send(generateException(req, 'badArgument'));
 					} else {
-						backendModule.getMetadataFormats().then(formats => {
+						const args = hasKey(req.query, 'identifier') ? req.query.identifier : undefined;
+						backendModule.getMetadataFormats(args).then(formats => {
 							const responseContent = {
 								ListMetadataFormats: formats.map(format => {
 									return {metadataFormat: [
@@ -182,7 +193,7 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 								})
 							};
 							res.send(generateResponse(req, responseContent));
-							console.log(generateResponse(req, responseContent));
+							// Console.log(generateResponse(req, responseContent));
 						});
 					}
 					break;
@@ -191,10 +202,15 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * Parameters: resumptionToken (exclusive)
 					 * exceptions: badArgument, badResumptionToken, noSetHierarchy
 					 */
-					if (queryParameters.length > 2 || (queryParameters.length === 2 && !queryParameters.includes('resumptionToken'))) {
+					if (queryParameters.length > 2 || (queryParameters.length === 2 && !hasKey(req.query, 'resumptionToken'))) {
 						res.send(generateException(req, 'badArgument'));
 					} else {
-						res.send(generateResponse(req, parameters, backendModule));
+						/**
+						 * @todo: Implement set functionality. Currently not supported by
+						 * the backend.
+						 */
+						const args = hasKey(req.query, 'resumptionToken') ? req.query.resumptionToken : undefined;
+						res.send(generateException(req, 'noSetHierarchy'));
 					}
 					break;
 				case 'ListIdentifiers':
@@ -211,6 +227,14 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * noRecordsMatch,
 					 * noSetHierarchy
 					 */
+					if (
+						(queryParameters.length > 6 || queryParameters.length < 2) ||
+						(queryParameters.length === 2 && (!hasKey(req.query, 'metadataFormat') && !hasKey(req.query, 'resumptionToken'))) ||
+						(!Object.keys(req.query).every(key => possibleParams.includes(key)))) {
+						res.send(generateException(req, 'badArgument'));
+					} else {
+						res.send(generateException(req, 'noRecordsMatch'));
+					}
 					break;
 				case 'ListRecords':
 					/**
@@ -226,19 +250,33 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * noRecordsMatch,
 					 * noSetHierarchy
 					 */
+					if ( (queryParameters.length > 6 || queryParameters.length < 2) ||
+						(queryParameters.length === 2 && (!hasKey(req.query, 'metadataFormat') && !hasKey(req.query, 'resumptionToken'))) ||
+						(!Object.keys(req.query).every(key => possibleParams.includes(key)))) {
+						res.send(generateException(req, 'badArgument'));
+					} else {
+						res.send(generateException(req, 'noRecordsMatch'));
+					}
 					break;
 				case 'GetRecord':
 					/**
 					 * Parameters: identifier (required),
 					 * metadataPrefix (required)
+					 *
 					 * exceptions: badArgument,
 					 * cannotDisseminateFormat,
 					 * idDoesNotExist
 					 */
-					if (queryParameters.length !== 3 || !queryParameters.includes('identifier') || !queryParameters.includes('metadataPrefix')) {
+					if (queryParameters.length !== 3 || !hasKey(req.query, 'identifier') || !hasKey(req.query, 'metadataPrefix')) {
 						res.send(generateException(req, 'badArgument'));
 					} else {
-						res.send(generateResponse(req, parameters, backendModule));
+						backendModule.getRecord(req.query.identifier, req.query.metadataPrefix)
+						.then(record => {
+							res.send(generateResponse(req, record));
+						})
+						.catch(err => {
+							res.send(generateException(req, findKey(ERRORS, err)));
+						});
 					}
 					break;
 				default:

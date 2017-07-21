@@ -57,7 +57,7 @@ const responseTemplate = {
 /**
  * Parse a full http request string.
  * @param {object} req - A HTTP request object
- * @returns {string}
+ * @returns {string} - The parsed full query URL
  */
 const parseFullUrl = req => {
 	return url.format({
@@ -69,13 +69,12 @@ const parseFullUrl = req => {
 /**
  * Parse and return an XML response to request.
  * @param {object} req - An HTTP request object
- * @param {object} parameters - A parameters object
- * @param {object} backendModule - The backend module
- * @returns {string}
+ * @param {object} responseContent - The body of the response
+ * @return {string} - Parsed XML response
  */
 function generateResponse(req, responseContent) {
 	const newResponse = JSON.parse(JSON.stringify(responseTemplate));
-	newResponse['OAI-PMH'].push({request: [{_attr: {verb: req.query.verb}}, parseFullUrl(req)]});
+	newResponse['OAI-PMH'].push({request: [{_attr: req.query}, parseFullUrl(req)]});
 	newResponse['OAI-PMH'].push(responseContent);
 	return xml(newResponse, {declaration: true});
 }
@@ -84,7 +83,7 @@ function generateResponse(req, responseContent) {
  * Generate an XML exception.
  * @param {object} req - An HTTP request object
  * @param {string} code - The OAI-PMH error code
- * @returns {string}
+ * @return {string} - Parsed XML exception
  */
 const generateException = (req, code) => {
 	/**
@@ -102,23 +101,11 @@ const generateException = (req, code) => {
 	if (!Object.hasOwnProperty.call(req, 'originalUrl')) {
 		throw new Error(`No original URL provided in request: ${req}`);
 	}
-//	Const exceptionObj = {
-//		'OAI-PMH': [
-//			{_attr:
-//				{xmlns: 'http://www.openarchives.org/OAI/2.0/',
-//					'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-//					'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
-//			},
-//			{responseDate: new Date().toISOString()},
-//			{request: req.originalUrl},
-//			{error: [{_attr: {code}}, EXCEPTIONS[code]]}
-//		]};
 
 	const newException = JSON.parse(JSON.stringify(responseTemplate));
 	newException['OAI-PMH'].push({request: req.originalUrl});
 	newException['OAI-PMH'].push({error: [{_attr: {code}}, EXCEPTIONS[code]]});
-	// Console.log(newException)
-	// console.log(responseTemplate)
+
 	return xml(newException, {declaration: true});
 };
 
