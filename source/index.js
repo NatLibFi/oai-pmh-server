@@ -34,7 +34,7 @@
 import quacksLike from 'little-quacker';
 import express from 'express';
 import {findKey} from 'lodash';
-import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from 'oai-pmh-server-backend-module-prototype';
+import {HARVESTING_GRANULARITY, DELETED_RECORDS_SUPPORT, ERRORS, factory as backendModulePrototypeFactory} from '@natlibfi/oai-pmh-server-backend-module-prototype';
 import {generateException, generateResponse} from './response';
 
 const PROTOCOL_VERSION = '2.0';
@@ -250,7 +250,7 @@ export default function oaiPmhServer(backendModuleFactory, parameters) {
 					 * noRecordsMatch,
 					 * noSetHierarchy
 					 */
-					if ( (queryParameters.length > 6 || queryParameters.length < 2) ||
+					if ((queryParameters.length > 6 || queryParameters.length < 2) ||
 						(queryParameters.length === 2 && (!hasKey(req.query, 'metadataFormat') && !hasKey(req.query, 'resumptionToken'))) ||
 						(!Object.keys(req.query).every(key => possibleParams.includes(key)))) {
 						res.send(generateException(req, 'badArgument'));

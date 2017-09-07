@@ -1,5 +1,5 @@
 {
-  "name": "oai-pmh-server",
+  "name": "@natlibfi/oai-pmh-server",
   "description": "Modular OAI-PMH server",
   "author": {
     "name": "The National Library of Finland"
@@ -47,7 +47,7 @@
     "mocha": "^3.4.2",
     "npm-check-updates": "^2.12.1",
     "nyc": "^10.3.2",
-    "oai-pmh-server-backend-module-prototype": "git+https://github.com/natlibfi/oai-pmh-server-backend-module-prototype.git",
+    "@natlibfi/oai-pmh-server-backend-module-prototype": "^1.0.0",
     "xml": "^1.0.1",
     "xmldom": "^0.1.27",
     "xo": "^0.18.2"
