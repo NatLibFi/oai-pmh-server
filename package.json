@@ -4,7 +4,7 @@
   "author": {
     "name": "The National Library of Finland"
   },
-  "keywords": [],
+  "keywords": ["oai-pmh","harvest","marc","library","bibliography","bibliographic","archive"],
   "homepage": "https://github.com/natlibfi/oai-pmh-server",
   "bugs": {
     "url": "https://github.com/natlibfi/oai-pmh-server/issues"
