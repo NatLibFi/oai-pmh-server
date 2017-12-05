@@ -36,7 +36,7 @@ import simple from 'simple-mock';
 import chaiHttp from 'chai-http';
 import chaiXml from 'chai-xml';
 import {factory} from '@natlibfi/oai-pmh-server-backend-module-prototype';
-import oaiPmhServer from '../source/index';
+import oaiPmhServer from '../src/index';
 
 chai.use(chaiHttp);
 chai.use(chaiXml);

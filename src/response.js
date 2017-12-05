@@ -32,6 +32,9 @@
 
 import url from 'url';
 import xml from 'xml';
+import xmldom from 'simple-xml-dom';
+import {findKey} from 'lodash';
+import {ERRORS} from '@natlibfi/oai-pmh-server-backend-module-prototype';
 
 const EXCEPTIONS = {
 	badArgument: 'Illegal query parameter',
@@ -72,39 +75,60 @@ const parseFullUrl = req => {
  * @param {object} responseContent - The body of the response
  * @return {string} - Parsed XML response
  */
-function generateResponse(req, responseContent) {
+function generateResponse(req, responseContent, recordData) {
 	const newResponse = JSON.parse(JSON.stringify(responseTemplate));
 	newResponse['OAI-PMH'].push({request: [{_attr: req.query}, parseFullUrl(req)]});
 	newResponse['OAI-PMH'].push(responseContent);
-	return xml(newResponse, {declaration: true});
+	const xmlString = xml(newResponse, {declaration: true});
+
+	/* The metadata xml cannot be serialized by the 'xml' module because it's already serialized! */
+	if (recordData) {
+		const records = [].concat(recordData);
+		const document = xmldom.parse(xmlString);
+		const metadataNodes = document.getElementsByTagName('metadata');
+
+		for (let i = 0; i < metadataNodes.length; i++) {
+			const node = metadataNodes.item(i);
+			const recordNode = xmldom.parse(records[i]);
+			node.appendChild(document.importNode(recordNode, true));
+		}
+
+		return xmldom.serialize(document);
+	}
+	return xmlString;
 }
 
 /**
  * Generate an XML exception.
  * @param {object} req - An HTTP request object
- * @param {string} code - The OAI-PMH error code
+ * @param {string} errors - OAI-PMH error codes
  * @return {string} - Parsed XML exception
  */
-const generateException = (req, code) => {
+const generateException = (req, errors) => {	
 	/**
 	 * Validate the argument types.
 	 */
-	if (req === undefined || code === undefined) {
-		throw new Error(`Function arguments are missing: request ${req}, code: ${code}`);
-	}
-	if (Object.keys(EXCEPTIONS).indexOf(code) === -1) {
-		throw new Error(`Unknown exception type: ${code}`);
-	}
+	if (req === undefined || errors === undefined) {
+		throw new Error(`Function arguments are missing: request ${req}, errors: ${errors}`);
+	}	
 	if (!(req instanceof Object)) {
 		throw new TypeError(`Invalid request: ${req}`);
 	}
 	if (!Object.hasOwnProperty.call(req, 'originalUrl')) {
 		throw new Error(`No original URL provided in request: ${req}`);
 	}
-
+	
 	const newException = JSON.parse(JSON.stringify(responseTemplate));
-	newException['OAI-PMH'].push({request: req.originalUrl});
-	newException['OAI-PMH'].push({error: [{_attr: {code}}, EXCEPTIONS[code]]});
+	const codes = errors.map(error => {
+		const code = Object.keys(ERRORS).find(key => ERRORS[key] === error);
+		if (Object.keys(EXCEPTIONS).indexOf(code) === -1) {
+			throw new Error(`Unknown exception type: ${code}`);
+		}
+		return code;
+	});	
+		
+	newException['OAI-PMH'].push({request: req.originalUrl});	
+	codes.forEach(code => newException['OAI-PMH'].push({error: [{_attr: {code}}, EXCEPTIONS[code]]}));
 
 	return xml(newException, {declaration: true});
 };

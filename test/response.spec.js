@@ -32,7 +32,7 @@
 
 import chai, {expect} from 'chai';
 import chaiXml from 'chai-xml';
-import {generateException} from '../source/response';
+import {generateException} from '../src/response';
 
 chai.use(chaiXml);
 
