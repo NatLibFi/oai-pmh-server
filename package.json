@@ -28,28 +28,25 @@
     "prepublishOnly": "npm run build:transpile",
     "lint": "xo --fix",
     "test": "cross-env NODE_ENV=test nyc mocha --compilers js:babel-register",
-    "test:watch": "npm run test && chokidar source test -c 'npm run test'",
     "coverage": "nyc check-coverage",
     "clean": "rimraf build coverage .nyc_output dist",
     "build:doc": "esdoc",
-    "build:transpile": "babel source --source-maps --out-dir=dist --minified",
-    "build": "npm run build:transpile && && ncu",
+    "build:transpile": "babel src --source-maps --out-dir=dist --minified",
+    "build": "npm run build:transpile && ncu",
     "dev": "npm run clean && npm run build",
-    "dev:check": "npm run clean && npm run lint && npm test;npm run coverage;npm run build",
-    "dev:watch": "chokidar source -c 'npm run build:transpile'",
-    "dev:check:watch": "chokidar source test -c 'npm run dev:check'",
+    "dev:check": "npm run lint && npm test && npm run coverage && npm run build",
+    "dev:watch": "chokidar src -c 'npm run build:transpile'",
+    "dev:check:watch": "chokidar src test -c 'npm run dev:check'",
     "check-and-build": "npm run lint && npm test && npm run coverage && npm run build",
     "travisci": "npm run check-and-build",
-    "publish-to-npm": "npm install && npm run lint && npm test && npm run coverage && npm publish"
+    "publish-to-npm": "npm install && npm run lint && npm test && npm run coverage && npm publish --access=public"
   },
   "dependencies": {
     "@natlibfi/oai-pmh-server-backend-module-prototype": "file:../oai-pmh-server-backend-module-prototype",
     "express": "^4.15.4",
     "little-quacker": "^1.0.0",
     "lodash": "^4.17.4",
-    "simple-xml-dom": "^1.0.0",
-    "xml": "^1.0.1",
-    "xmldom": "^0.1.27"
+    "xml-writer": "^1.7.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -65,11 +62,12 @@
     "git-scripts": "^0.2.1",
     "istanbul": "^0.4.5",
     "mocha": "^3.5.3",
+    "mock-express-request": "^0.2.2",
+    "mock-request2": "^1.1.0",
     "npm-check-updates": "^2.13.0",
     "nyc": "^11.3.0",
     "rimraf": "^2.6.1",
     "simple-mock": "^0.8.0",
-    "validate-commit": "^3.2.1",
     "xo": "^0.18.2"
   },
   "engines": {
@@ -118,10 +116,5 @@
     "statements": 100,
     "functions": 100,
     "branches": 100
-  },
-  "git": {
-    "scripts": {
-      "commit-msg": "./node_modules/.bin/validate-commit-msg -p atom $1"
-    }
   }
 }

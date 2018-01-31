@@ -31,8 +31,7 @@
 'use strict';
 
 import url from 'url';
-import xml from 'xml';
-import xmldom from 'simple-xml-dom';
+import XMLWriter from 'xml-writer';
 import {findKey} from 'lodash';
 import {ERRORS} from '@natlibfi/oai-pmh-server-backend-module-prototype';
 
@@ -47,90 +46,81 @@ const EXCEPTIONS = {
 	noSetHierarchy: 'The repository does not support sets.'
 };
 
-const responseTemplate = {
-	'OAI-PMH': [
-		{_attr:
-		{xmlns: 'http://www.openarchives.org/OAI/2.0/',
-			'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-			'xsi:schemaLocation': 'http://www.openarchives.org/OAI/2.0/ \nhttp://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'}
-		},
-		{responseDate: new Date().toISOString()}
-	]};
-
 /**
  * Parse a full http request string.
  * @param {object} req - A HTTP request object
  * @returns {string} - The parsed full query URL
  */
-const parseFullUrl = req => {
-	return url.format({
-		protocol: req.protocol,
-		host: req.get('host')
-	}) + req.originalUrl;
+const parseFullUrl = req => url.format({
+	protocol: req.protocol,
+	host: req.get('host'),
+	pathname: req.path
+});
+
+const createResponseTemplate = (writer, req) => {
+	writer.startDocument();
+
+	writer.startElement('OAI-PMH')
+	.writeAttribute('xmlns', 'http://www.openarchives.org/OAI/2.0/')
+	.writeAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+	.writeAttribute('xsi:schemaLocation', 'http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd');
+
+	writer.writeElement('responseDate', new Date().toISOString());
+	writer.startElement('request');
+	Object.keys(req.query).forEach(key => writer.writeAttribute(key, req.query[key]));
+	writer.text(parseFullUrl(req));
+	writer.endElement();
 };
 
 /**
  * Parse and return an XML response to request.
  * @param {object} req - An HTTP request object
- * @param {object} responseContent - The body of the response
+ * @param {string} responseContent - The body of the response
  * @return {string} - Parsed XML response
  */
-function generateResponse(req, responseContent, recordData) {
-	const newResponse = JSON.parse(JSON.stringify(responseTemplate));
-	newResponse['OAI-PMH'].push({request: [{_attr: req.query}, parseFullUrl(req)]});
-	newResponse['OAI-PMH'].push(responseContent);
-	const xmlString = xml(newResponse, {declaration: true});
-
-	/* The metadata xml cannot be serialized by the 'xml' module because it's already serialized! */
-	if (recordData) {
-		const records = [].concat(recordData);
-		const document = xmldom.parse(xmlString);
-		const metadataNodes = document.getElementsByTagName('metadata');
-
-		for (let i = 0; i < metadataNodes.length; i++) {
-			const node = metadataNodes.item(i);
-			const recordNode = xmldom.parse(records[i]);
-			node.appendChild(document.importNode(recordNode, true));
-		}
-
-		return xmldom.serialize(document);
-	}
-	return xmlString;
-}
+const generateResponse = (req, responseContent) => {
+	const writer = new XMLWriter();
+	createResponseTemplate(writer, req);
+	writer.writeRaw(responseContent);
+	return writer.toString();
+};
 
 /**
  * Generate an XML exception.
  * @param {object} req - An HTTP request object
- * @param {string} errors - OAI-PMH error codes
+ * @param {array} errors - OAI-PMH error codes
  * @return {string} - Parsed XML exception
  */
-const generateException = (req, errors) => {	
+const generateException = (req, errors) => {
 	/**
 	 * Validate the argument types.
 	 */
 	if (req === undefined || errors === undefined) {
 		throw new Error(`Function arguments are missing: request ${req}, errors: ${errors}`);
-	}	
+	}
 	if (!(req instanceof Object)) {
 		throw new TypeError(`Invalid request: ${req}`);
 	}
 	if (!Object.hasOwnProperty.call(req, 'originalUrl')) {
 		throw new Error(`No original URL provided in request: ${req}`);
 	}
-	
-	const newException = JSON.parse(JSON.stringify(responseTemplate));
+
+	const writer = new XMLWriter();
+	createResponseTemplate(writer, req);
+
 	const codes = errors.map(error => {
 		const code = Object.keys(ERRORS).find(key => ERRORS[key] === error);
 		if (Object.keys(EXCEPTIONS).indexOf(code) === -1) {
-			throw new Error(`Unknown exception type: ${code}`);
+			throw new Error(`Unknown exception type: ${error}`);
 		}
 		return code;
-	});	
-		
-	newException['OAI-PMH'].push({request: req.originalUrl});	
-	codes.forEach(code => newException['OAI-PMH'].push({error: [{_attr: {code}}, EXCEPTIONS[code]]}));
+	});
 
-	return xml(newException, {declaration: true});
+	codes.forEach(code => {
+		writer.startElement('error').writeAttribute('code', code).text(EXCEPTIONS[code]);
+	});
+
+	return writer.toString();
 };
 
 export {generateException, generateResponse};
