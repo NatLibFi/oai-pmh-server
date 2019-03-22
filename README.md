@@ -1,4 +1,5 @@
-# DEPRECATED (Superseded by ([melinda-oai-pmh-provider](https://github.com/NatLibFi/melinda-oai-pmh-provider)) Modular OAI-PMH server [![NPM Version](https://img.shields.io/npm/v/@natlibfi/oai-pmh-server.svg)](https://npmjs.org/package/@natlibfi/oai-pmh-server) [![Build Status](https://travis-ci.org/NatLibFi/oai-pmh-server.svg)](https://travis-ci.org/NatLibFi/oai-pmh-server) [![Test Coverage](https://codeclimate.com/github/NatLibFi/oai-pmh-server/badges/coverage.svg)](https://codeclimate.com/github/NatLibFi/oai-pmh-server/coverage)
+# DEPRECATED (Superseded by [melinda-oai-pmh-provider](https://github.com/NatLibFi/melinda-oai-pmh-provider))
+# Modular OAI-PMH server [![NPM Version](https://img.shields.io/npm/v/@natlibfi/oai-pmh-server.svg)](https://npmjs.org/package/@natlibfi/oai-pmh-server) [![Build Status](https://travis-ci.org/NatLibFi/oai-pmh-server.svg)](https://travis-ci.org/NatLibFi/oai-pmh-server) [![Test Coverage](https://codeclimate.com/github/NatLibFi/oai-pmh-server/badges/coverage.svg)](https://codeclimate.com/github/NatLibFi/oai-pmh-server/coverage)
 
 Modular OAI-PMH server
 
